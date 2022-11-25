@@ -1048,14 +1048,7 @@ public class HttpClientTest extends AbstractHttpClientServerTest
             }
 
             @Override
-            public void onContent(Response response, ByteBuffer content, Callback callback)
-            {
-                // Should not be invoked
-                counter.incrementAndGet();
-            }
-
-            @Override
-            public void onContent(Response response, LongConsumer demand, ByteBuffer content, Callback callback)
+            public void onContent(Response response, Content.Chunk chunk, Runnable demander)
             {
                 // Should not be invoked
                 counter.incrementAndGet();
@@ -1405,7 +1398,7 @@ public class HttpClientTest extends AbstractHttpClientServerTest
             }
         });
 
-        AtomicReference<Callback> callbackRef = new AtomicReference<>();
+        AtomicReference<Runnable> demanderRef = new AtomicReference<>();
         CountDownLatch contentLatch = new CountDownLatch(1);
         CountDownLatch completeLatch = new CountDownLatch(1);
         client.newRequest("localhost", connector.getLocalPort())
@@ -1413,10 +1406,11 @@ public class HttpClientTest extends AbstractHttpClientServerTest
             .send(new Response.Listener.Adapter()
             {
                 @Override
-                public void onContent(Response response, ByteBuffer content, Callback callback)
+                public void onContent(Response response, Content.Chunk chunk, Runnable demander)
                 {
+                    chunk.release();
                     // Do not notify the callback yet.
-                    callbackRef.set(callback);
+                    demanderRef.set(demander);
                     contentLatch.countDown();
                 }
 
@@ -1434,7 +1428,7 @@ public class HttpClientTest extends AbstractHttpClientServerTest
         assertFalse(completeLatch.await(1, TimeUnit.SECONDS));
 
         // Consume the content.
-        callbackRef.get().succeeded();
+        demanderRef.get().run();
 
         // Now the complete event is emitted.
         assertTrue(completeLatch.await(5, TimeUnit.SECONDS));

@@ -681,8 +681,9 @@ public abstract class ProxyHandler extends Handler.Processor
         }
 
         @Override
-        public void onContent(org.eclipse.jetty.client.api.Response serverToProxyResponse, ByteBuffer serverToProxyContent, Callback serverToProxyContentCallback)
+        public void onContent(org.eclipse.jetty.client.api.Response serverToProxyResponse, Content.Chunk serverToProxyChunk, Runnable serverToProxyDemander)
         {
+            ByteBuffer serverToProxyContent = serverToProxyChunk.getByteBuffer();
             if (LOG.isDebugEnabled())
                 LOG.debug("{} S2P received content {}", requestId(clientToProxyRequest), BufferUtil.toDetailString(serverToProxyContent));
             Callback callback = new Callback()
@@ -692,7 +693,8 @@ public abstract class ProxyHandler extends Handler.Processor
                 {
                     if (LOG.isDebugEnabled())
                         LOG.debug("{} P2C succeeded to write content {}", requestId(clientToProxyRequest), BufferUtil.toDetailString(serverToProxyContent));
-                    serverToProxyContentCallback.succeeded();
+                    serverToProxyChunk.release();
+                    serverToProxyDemander.run();
                 }
 
                 @Override
@@ -700,7 +702,7 @@ public abstract class ProxyHandler extends Handler.Processor
                 {
                     if (LOG.isDebugEnabled())
                         LOG.debug("{} P2C failed to write content {}", requestId(clientToProxyRequest), BufferUtil.toDetailString(serverToProxyContent), failure);
-                    serverToProxyContentCallback.failed(failure);
+                    serverToProxyChunk.release();
                     // Cannot write towards the client, abort towards the server.
                     serverToProxyResponse.abort(failure);
                 }

@@ -34,6 +34,7 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Response.Listener;
 import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.IO;
@@ -69,6 +70,7 @@ import org.slf4j.LoggerFactory;
  * with the typical {@link InputStream#read()} semantic.
  * If the consumer is slower than the producer, then the producer will block
  * until the client consumes.
+ * TODO this implementation should be reworked to get rid of the internal Chunk class
  */
 public class InputStreamResponseListener extends Listener.Adapter
 {
@@ -100,13 +102,15 @@ public class InputStreamResponseListener extends Listener.Adapter
     }
 
     @Override
-    public void onContent(Response response, ByteBuffer content, Callback callback)
+    public void onContent(Response response, Content.Chunk chunk, Runnable demander)
     {
+        ByteBuffer content = chunk.getByteBuffer();
         if (content.remaining() == 0)
         {
             if (LOG.isDebugEnabled())
                 LOG.debug("Skipped empty content {}", content);
-            callback.succeeded();
+            chunk.release();
+            demander.run();
             return;
         }
 
@@ -118,6 +122,15 @@ public class InputStreamResponseListener extends Listener.Adapter
             {
                 if (LOG.isDebugEnabled())
                     LOG.debug("Queueing content {}", content);
+                Callback callback = Callback.from(() ->
+                {
+                    chunk.release();
+                    demander.run();
+                }, (x) ->
+                {
+                    chunk.release();
+                    response.abort(x);
+                });
                 chunks.add(new Chunk(content, callback));
                 l.signalAll();
             }
@@ -127,7 +140,8 @@ public class InputStreamResponseListener extends Listener.Adapter
         {
             if (LOG.isDebugEnabled())
                 LOG.debug("InputStream closed, ignored content {}", content);
-            callback.failed(new AsynchronousCloseException());
+            chunk.release();
+            response.abort(new AsynchronousCloseException());
         }
     }
 
