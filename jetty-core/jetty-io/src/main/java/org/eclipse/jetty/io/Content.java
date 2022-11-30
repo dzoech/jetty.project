@@ -649,20 +649,20 @@ public class Content
 
         /**
          * <p>Returns whether this Chunk is a <em>terminal</em> chunk.</p>
-         * <p>A terminal chunk is either an {@link Error error chunk},
-         * or a Chunk that {@link #isLast()} is true and has no remaining
-         * bytes.</p>
+         * <p>A terminal chunk is a Chunk that {@link #isLast()} is true
+         * and has no remaining bytes.</p>
          *
          * @return whether this Chunk is a terminal chunk
          */
         default boolean isTerminal()
         {
-            return this instanceof Error || isLast() && !hasRemaining();
+            return isLast() && !hasRemaining();
         }
 
         /**
          * <p>A chunk that wraps a failure.</p>
-         * <p>Error Chunks are always last and have no bytes to read.</p>
+         * <p>Error Chunks are always last and have no bytes to read,
+         * as such they are <em>terminal</em> Chunks.</p>
          *
          * @see #from(Throwable)
          */
@@ -693,9 +693,14 @@ public class Content
             }
 
             @Override
+            public boolean isTerminal()
+            {
+                return true;
+            }
+
+            @Override
             public void retain()
             {
-                throw new UnsupportedOperationException();
             }
 
             @Override

@@ -27,6 +27,11 @@ public abstract class ByteBufferChunk implements Content.Chunk
     public static final ByteBufferChunk EMPTY = new ByteBufferChunk(BufferUtil.EMPTY_BUFFER, false)
     {
         @Override
+        public void retain()
+        {
+        }
+
+        @Override
         public String toString()
         {
             return "%s[EMPTY]".formatted(ByteBufferChunk.class.getSimpleName());
@@ -34,6 +39,11 @@ public abstract class ByteBufferChunk implements Content.Chunk
     };
     public static final ByteBufferChunk EOF = new ByteBufferChunk(BufferUtil.EMPTY_BUFFER, true)
     {
+        @Override
+        public void retain()
+        {
+        }
+
         @Override
         public String toString()
         {
