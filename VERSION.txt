@@ -1,4 +1,4 @@
-jetty-12.0.0-SNAPSHOT
+jetty-12.0.0.alpha3 - 01 December 2022
 
 jetty-12.0.0.alpha1 - 15 September 2022
  + 8474 Jetty 12 : Resource API Review
