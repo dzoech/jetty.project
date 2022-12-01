@@ -369,7 +369,7 @@ public class ResponseNotifier
                 if (LOG.isDebugEnabled())
                     LOG.debug("Registering content in multiplexed content source #{} that contains {}", index, currentChunk);
                 if (currentChunk == null || currentChunk == AlreadyReadChunk.INSTANCE)
-                    this.chunk = Content.Chunk.slice(chunk);
+                    this.chunk = chunk.slice();
                 else if (!currentChunk.isLast())
                     throw new IllegalStateException("Cannot overwrite chunk");
                 onDemandCallback();

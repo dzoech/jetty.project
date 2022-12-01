@@ -437,6 +437,8 @@ public class Content
         /**
          * <p>Creates a Chunk with the given ByteBuffer.</p>
          * <p>The returned Chunk must be {@link #release() released}.</p>
+         * <p>New chunks with an empty {@code byteBuffer} and {@code last}
+         * set to {@code true} cannot be created.</p>
          *
          * @param byteBuffer the ByteBuffer with the bytes of this Chunk
          * @param last whether the Chunk is the last one
@@ -463,6 +465,8 @@ public class Content
         /**
          * <p>Creates a last/non-last Chunk with the given ByteBuffer.</p>
          * <p>The returned Chunk must be {@link #release() released}.</p>
+         * <p>New chunks with an empty {@code byteBuffer} and {@code last}
+         * set to {@code true} cannot be created.</p>
          *
          * @param byteBuffer the ByteBuffer with the bytes of this Chunk
          * @param last whether the Chunk is the last one
@@ -478,6 +482,8 @@ public class Content
          * <p>Creates a last/non-last Chunk with the given ByteBuffer, linked to the given Retainable.</p>
          * <p>The {@link #retain()} and {@link #release()} methods of this Chunk will delegate to the
          * given Retainable.</p>
+         * <p>New chunks with an empty {@code byteBuffer} and {@code last}
+         * set to {@code true} cannot be created.</p>
          *
          * @param byteBuffer the ByteBuffer with the bytes of this Chunk
          * @param last whether the Chunk is the last one
@@ -540,28 +546,6 @@ public class Content
         }
 
         /**
-         * <p>Creates a chunk that is a slice of the given chunk.</p>
-         * <p>
-         *  The chunk slice has a byte buffer that is a slice of the original chunk's byte buffer, the last flag
-         *  copied over and the original chunk used as the retainable of the chunk slice.
-         *  Note that after this method returns, an extra Chunk instance refers to the same byte buffer,
-         *  so the original chunk is retained and is used as the {@link Retainable} for the returned chunk.
-         * </p>
-         * <p>Passing a null chunk returns null.</p>
-         * <p>Passing a terminal chunk returns it.</p>
-         *
-         * @param chunk the chunk to slice.
-         * @return the chunk slice.
-         */
-        static Chunk slice(Chunk chunk)
-        {
-            if (chunk == null || chunk.isTerminal())
-                return chunk;
-            chunk.retain();
-            return Chunk.from(chunk.getByteBuffer().slice(), chunk.isLast(), chunk);
-        }
-
-        /**
          * @return the ByteBuffer of this Chunk
          */
         ByteBuffer getByteBuffer();
@@ -570,6 +554,23 @@ public class Content
          * @return whether this is the last Chunk
          */
         boolean isLast();
+
+        /**
+         * <p>Returns a new {@code Chunk} whose {@code ByteBuffer} is a slice of the
+         * {@code ByteBuffer} of the source {@code Chunk}.</p>
+         * <p>The returned {@code Chunk} retains the source {@code Chunk} and it is linked
+         * to it via {@link #from(ByteBuffer, boolean, Retainable)}.</p>
+         *
+         * @return a new {@code Chunk} retained from the source {@code Chunk} with a slice
+         * of the source {@code Chunk}'s {@code ByteBuffer}
+         */
+        default Chunk slice()
+        {
+            if (isTerminal())
+                return this;
+            retain();
+            return from(getByteBuffer().slice(), isLast(), this);
+        }
 
         /**
          * <p>Returns a new {@code Chunk} whose {@code ByteBuffer} is a slice, with the given
@@ -649,20 +650,27 @@ public class Content
 
         /**
          * <p>Returns whether this Chunk is a <em>terminal</em> chunk.</p>
-         * <p>A terminal chunk is either an {@link Error error chunk},
-         * or a Chunk that {@link #isLast()} is true and has no remaining
-         * bytes.</p>
+         * <p>A terminal chunk is a Chunk that {@link #isLast()} is true
+         * and has no remaining bytes.</p>
+         * <p><em>Terminal</em> chunks cannot be lifecycled using the
+         * {@link Retainable} contract like other chunks: they always throw
+         * {@link UnsupportedOperationException} on {@link #retain()} and
+         * always return {@code true} on {@link #release()}. As such, they
+         * cannot contain a recyclable buffer and calling their
+         * {@link #release()} method isn't necessary, although harmless.
+         * </p>
          *
          * @return whether this Chunk is a terminal chunk
          */
         default boolean isTerminal()
         {
-            return this instanceof Error || isLast() && !hasRemaining();
+            return isLast() && !hasRemaining();
         }
 
         /**
          * <p>A chunk that wraps a failure.</p>
-         * <p>Error Chunks are always last and have no bytes to read.</p>
+         * <p>Error Chunks are always last and have no bytes to read,
+         * as such they are <em>terminal</em> Chunks.</p>
          *
          * @see #from(Throwable)
          */
