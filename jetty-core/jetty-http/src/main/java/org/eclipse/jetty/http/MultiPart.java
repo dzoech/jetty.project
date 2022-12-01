@@ -1206,7 +1206,8 @@ public class MultiPart
                 int sliceLimit = buffer.position() + boundaryOffset;
                 if (sliceLimit > 0 && buffer.get(sliceLimit - 1) == '\r')
                     --sliceLimit;
-                Content.Chunk content = chunk.slice(buffer.position(), sliceLimit, true);
+                int position = buffer.position();
+                Content.Chunk content = position == sliceLimit ? Content.Chunk.EOF : chunk.slice(position, sliceLimit, true);
                 buffer.position(buffer.position() + boundaryOffset + boundaryFinder.getLength());
                 notifyPartContent(content);
                 notifyPartEnd();

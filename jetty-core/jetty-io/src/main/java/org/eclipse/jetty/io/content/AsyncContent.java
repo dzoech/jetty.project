@@ -50,7 +50,9 @@ public class AsyncContent implements Content.Sink, Content.Source, Closeable
     @Override
     public void write(boolean last, ByteBuffer byteBuffer, Callback callback)
     {
-        write(Content.Chunk.from(byteBuffer, last, callback::succeeded), callback);
+        boolean terminal = !byteBuffer.hasRemaining() && last;
+        Content.Chunk chunk = terminal ? Content.Chunk.EOF : Content.Chunk.from(byteBuffer, last, callback::succeeded);
+        write(chunk, callback);
     }
 
     public void write(Content.Chunk chunk, Callback callback)

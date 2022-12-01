@@ -73,6 +73,12 @@ public class ChunksContentSource implements Content.Source
             if (last)
                 terminated = Content.Chunk.EOF;
         }
+        boolean terminal = !chunk.getByteBuffer().hasRemaining() && chunk.isLast();
+        if (terminal)
+        {
+            chunk.release();
+            return Content.Chunk.EOF;
+        }
         return Content.Chunk.from(chunk.getByteBuffer().slice(), chunk.isLast(), chunk);
     }
 
