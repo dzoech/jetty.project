@@ -95,7 +95,7 @@ public class HttpReceiverOverHTTP2 extends HttpReceiver implements HTTP2Channel.
                 return Content.Chunk.EMPTY;
             }
         }
-        return Content.Chunk.from(buffer, frame.isEndStream(), data);
+        return Content.Chunk.from(buffer, false, data);
     }
 
     @Override

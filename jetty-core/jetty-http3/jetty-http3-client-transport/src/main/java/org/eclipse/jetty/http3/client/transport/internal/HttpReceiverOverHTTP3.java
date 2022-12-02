@@ -77,7 +77,7 @@ public class HttpReceiverOverHTTP3 extends HttpReceiver implements Stream.Client
                 return Content.Chunk.EMPTY;
             }
         }
-        return Content.Chunk.from(byteBuffer, data.isLast(), data);
+        return Content.Chunk.from(byteBuffer, false, data);
     }
 
     @Override
