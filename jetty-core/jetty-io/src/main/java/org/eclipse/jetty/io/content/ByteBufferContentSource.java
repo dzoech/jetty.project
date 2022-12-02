@@ -78,8 +78,9 @@ public class ByteBufferContentSource implements Content.Source
             if (last)
                 terminated = Content.Chunk.EOF;
         }
-        boolean terminal = !buffer.hasRemaining() && last;
-        return terminal ? Content.Chunk.EOF : Content.Chunk.from(buffer, last);
+        if (!buffer.hasRemaining())
+            return last ? Content.Chunk.EOF : Content.Chunk.EMPTY;
+        return Content.Chunk.from(buffer, last);
     }
 
     @Override
