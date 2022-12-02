@@ -50,6 +50,9 @@ public class AsyncContent implements Content.Sink, Content.Source, Closeable
     @Override
     public void write(boolean last, ByteBuffer byteBuffer, Callback callback)
     {
+        // The callback parameter is only ever going to be failed by write(Chunk, Callback)
+        // if fail(Throwable) is called, and only ever going to be succeeded by Chunk.release()
+        // which is why it is safe to pass it to two paths and still not have it called twice.
         boolean terminal = !byteBuffer.hasRemaining() && last;
         Content.Chunk chunk = terminal ? Content.Chunk.EOF : Content.Chunk.from(byteBuffer, last, callback::succeeded);
         write(chunk, callback);
@@ -111,7 +114,7 @@ public class AsyncContent implements Content.Sink, Content.Source, Closeable
                     if (writeClosed && chunks.size() == 1)
                     {
                         Content.Chunk chunk = chunks.peek().chunk();
-                        if (chunk.isLast() && !chunk.hasRemaining())
+                        if (chunk.isTerminal())
                             return;
                     }
                     l.await();

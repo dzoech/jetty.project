@@ -13,19 +13,25 @@
 
 package org.eclipse.jetty.io;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jetty.io.content.AsyncContent;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.thread.Invocable;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -123,6 +129,28 @@ public class AsyncContentSourceTest
             assertNotNull(chunk);
             assertThat(chunk, instanceOf(Content.Chunk.Error.class));
             assertThat(((Content.Chunk.Error)chunk).getCause(), sameInstance(error));
+        }
+    }
+
+    @Test
+    public void testChunkReleaseSucceedsWriteCallback()
+    {
+        try (AsyncContent async = new AsyncContent())
+        {
+            ByteBuffer buf = ByteBuffer.wrap(new byte[1]);
+            AtomicInteger successCounter = new AtomicInteger();
+            AtomicReference<Throwable> failureRef = new AtomicReference<>();
+
+            async.write(false, buf, Callback.from(successCounter::incrementAndGet, failureRef::set));
+
+            Content.Chunk chunk = async.read();
+            assertThat(successCounter.get(), is(0));
+            chunk.retain();
+            assertThat(chunk.release(), is(false));
+            assertThat(successCounter.get(), is(0));
+            assertThat(chunk.release(), is(true));
+            assertThat(successCounter.get(), is(1));
+            assertThat(failureRef.get(), is(nullValue()));
         }
     }
 }
