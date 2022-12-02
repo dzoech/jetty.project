@@ -152,7 +152,7 @@ public class AsyncContentSourceTest
     }
 
     @Test
-    public void testEmptyChunkReleaseSucceedsWriteCallback()
+    public void testEmptyChunkReadSucceedsWriteCallback()
     {
         try (AsyncContent async = new AsyncContent())
         {
@@ -170,7 +170,7 @@ public class AsyncContentSourceTest
     }
 
     @Test
-    public void testLastEmptyChunkReleaseSucceedsWriteCallback()
+    public void testLastEmptyChunkReadSucceedsWriteCallback()
     {
         try (AsyncContent async = new AsyncContent())
         {
