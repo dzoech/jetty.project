@@ -17,14 +17,12 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jetty.io.content.AsyncContent;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.thread.Invocable;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -137,17 +135,52 @@ public class AsyncContentSourceTest
     {
         try (AsyncContent async = new AsyncContent())
         {
-            ByteBuffer buf = ByteBuffer.wrap(new byte[1]);
             AtomicInteger successCounter = new AtomicInteger();
             AtomicReference<Throwable> failureRef = new AtomicReference<>();
 
-            async.write(false, buf, Callback.from(successCounter::incrementAndGet, failureRef::set));
+            async.write(false, ByteBuffer.wrap(new byte[1]), Callback.from(successCounter::incrementAndGet, failureRef::set));
 
             Content.Chunk chunk = async.read();
             assertThat(successCounter.get(), is(0));
             chunk.retain();
             assertThat(chunk.release(), is(false));
             assertThat(successCounter.get(), is(0));
+            assertThat(chunk.release(), is(true));
+            assertThat(successCounter.get(), is(1));
+            assertThat(failureRef.get(), is(nullValue()));
+        }
+    }
+
+    @Test
+    public void testEmptyChunkReleaseSucceedsWriteCallback()
+    {
+        try (AsyncContent async = new AsyncContent())
+        {
+            AtomicInteger successCounter = new AtomicInteger();
+            AtomicReference<Throwable> failureRef = new AtomicReference<>();
+
+            async.write(false, ByteBuffer.wrap(new byte[0]), Callback.from(successCounter::incrementAndGet, failureRef::set));
+
+            Content.Chunk chunk = async.read();
+            assertThat(successCounter.get(), is(1));
+            assertThat(chunk.release(), is(true));
+            assertThat(successCounter.get(), is(1));
+            assertThat(failureRef.get(), is(nullValue()));
+        }
+    }
+
+    @Test
+    public void testLastEmptyChunkReleaseSucceedsWriteCallback()
+    {
+        try (AsyncContent async = new AsyncContent())
+        {
+            AtomicInteger successCounter = new AtomicInteger();
+            AtomicReference<Throwable> failureRef = new AtomicReference<>();
+
+            async.write(true, ByteBuffer.wrap(new byte[0]), Callback.from(successCounter::incrementAndGet, failureRef::set));
+
+            Content.Chunk chunk = async.read();
+            assertThat(successCounter.get(), is(1));
             assertThat(chunk.release(), is(true));
             assertThat(successCounter.get(), is(1));
             assertThat(failureRef.get(), is(nullValue()));

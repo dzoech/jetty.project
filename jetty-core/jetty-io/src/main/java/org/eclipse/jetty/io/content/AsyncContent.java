@@ -50,12 +50,31 @@ public class AsyncContent implements Content.Sink, Content.Source, Closeable
     @Override
     public void write(boolean last, ByteBuffer byteBuffer, Callback callback)
     {
-        // The callback parameter is only ever going to be failed by write(Chunk, Callback)
-        // if fail(Throwable) is called, and only ever going to be succeeded by Chunk.release()
-        // which is why it is safe to pass it to two paths and still not have it called twice.
-        boolean terminal = !byteBuffer.hasRemaining() && last;
-        Content.Chunk chunk = terminal ? Content.Chunk.EOF : Content.Chunk.from(byteBuffer, last, callback::succeeded);
-        write(chunk, callback);
+        // This class' read() impl calls succeeded() on the callback before returning it to the
+        // caller, so when EOF / EMPTY are used this is perfectly right as the chunk can be
+        // considered consumed and there is no buffer to reclaim. But when a proper buffer is
+        // used the passed callback must be wrapped to make its succeeded() method a noop
+        // as it is the release of the chunk that should trigger the success of the callback.
+        Content.Chunk chunk;
+        Callback cb;
+        if (!byteBuffer.hasRemaining())
+        {
+            chunk = last ? Content.Chunk.EOF : Content.Chunk.EMPTY;
+            cb = callback;
+        }
+        else
+        {
+            chunk = Content.Chunk.from(byteBuffer, last, callback::succeeded);
+            cb = new Callback.Nested(callback)
+            {
+                @Override
+                public void succeeded()
+                {
+                    // Noop, chunk.release() will trigger the callback's success.
+                }
+            };
+        }
+        write(chunk, cb);
     }
 
     public void write(Content.Chunk chunk, Callback callback)
@@ -171,6 +190,7 @@ public class AsyncContent implements Content.Sink, Content.Source, Closeable
             if (chunks.isEmpty())
                 l.signal();
         }
+        current.callback.succeeded();
         return current.chunk();
     }
 
