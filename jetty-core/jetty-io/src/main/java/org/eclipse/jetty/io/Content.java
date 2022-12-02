@@ -566,6 +566,8 @@ public class Content
          */
         default Chunk slice()
         {
+            if (!getByteBuffer().hasRemaining())
+                return isLast() ? EOF : EMPTY;
             if (isTerminal())
                 return this;
             retain();
@@ -586,6 +588,8 @@ public class Content
          */
         default Chunk slice(int position, int limit, boolean last)
         {
+            if (position == limit)
+                return last ? EOF : EMPTY;
             if (isTerminal())
                 return this;
             ByteBuffer sourceBuffer = getByteBuffer();
