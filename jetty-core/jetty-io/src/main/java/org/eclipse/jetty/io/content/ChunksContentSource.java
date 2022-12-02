@@ -73,7 +73,7 @@ public class ChunksContentSource implements Content.Source
             if (last)
                 terminated = Content.Chunk.EOF;
         }
-        return chunk.slice();
+        return chunk;
     }
 
     @Override
