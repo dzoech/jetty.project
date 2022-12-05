@@ -66,14 +66,13 @@ public class AsyncContent implements Content.Sink, Content.Source, Closeable
     /**
      * <p>Writes the given {@link ByteBuffer}, notifying the {@link Callback} when the
      * write is complete.</p>
-     * <p>
-     * <p>The callback completes:
+     * <p>The callback completes:</p>
      * <ul>
      * <li>immediately with a failure when the written chunk is an instance of {@link Content.Chunk.Error}</li>
      * <li>successfully when the {@link Content.Chunk} returned by {@link #read()} is released</li>
      * <li>successfully just before the {@link Content.Chunk} is returned if the latter {@link Content.Chunk#hasRemaining() has no remaining byte}</li>
      * </ul>
-     * </p>
+     *
      * @param chunk the Content.Chunk to write
      * @param callback the callback to notify when the write operation is complete
      */

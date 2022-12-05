@@ -558,7 +558,7 @@ public class Content
         /**
          * <p>Returns a new {@code Chunk} whose {@code ByteBuffer} is a slice of the
          * {@code ByteBuffer} of the source {@code Chunk} unless the source
-         * {@link #hasRemaining() has no remaining byte} in which case:
+         * {@link #hasRemaining() has no remaining byte} in which case:</p>
          * <ul>
          * <li>{@code this} is returned if it is an instance of {@link Error}</li>
          * <li>{@link #EOF} is returned if {@link #isLast()} is {@code true}</li>
