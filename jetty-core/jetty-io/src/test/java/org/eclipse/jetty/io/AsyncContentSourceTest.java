@@ -163,6 +163,7 @@ public class AsyncContentSourceTest
 
             Content.Chunk chunk = async.read();
             assertThat(successCounter.get(), is(1));
+            assertThat(chunk.isTerminal(), is(false));
             assertThat(chunk.release(), is(true));
             assertThat(successCounter.get(), is(1));
             assertThat(failureRef.get(), is(nullValue()));
@@ -181,6 +182,7 @@ public class AsyncContentSourceTest
 
             Content.Chunk chunk = async.read();
             assertThat(successCounter.get(), is(1));
+            assertThat(chunk.isTerminal(), is(true));
             assertThat(chunk.release(), is(true));
             assertThat(successCounter.get(), is(1));
             assertThat(failureRef.get(), is(nullValue()));

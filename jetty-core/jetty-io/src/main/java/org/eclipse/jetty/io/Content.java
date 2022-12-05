@@ -557,24 +557,36 @@ public class Content
 
         /**
          * <p>Returns a new {@code Chunk} whose {@code ByteBuffer} is a slice of the
-         * {@code ByteBuffer} of the source {@code Chunk}.</p>
-         * <p>The returned {@code Chunk} retains the source {@code Chunk} and it is linked
-         * to it via {@link #from(ByteBuffer, boolean, Retainable)}.</p>
+         * {@code ByteBuffer} of the source {@code Chunk} unless the source
+         * {@link #hasRemaining() has no remaining byte} in which case:
+         * <ul>
+         * <li>{@code this} is returned if it is an instance of {@link Error}</li>
+         * <li>{@link #EOF} is returned if {@link #isLast()} is {@code true}</li>
+         * <li>{@link #EMPTY} is returned if {@link #isLast()} is {@code false}</li>
+         * </ul>
+         * <p>If the source has remaining bytes, the returned {@code Chunk} retains
+         * the source {@code Chunk} and it is linked to it via
+         * {@link #from(ByteBuffer, boolean, Retainable)}.</p>
          *
          * @return a new {@code Chunk} retained from the source {@code Chunk} with a slice
          * of the source {@code Chunk}'s {@code ByteBuffer}
          */
         default Chunk slice()
         {
-            if (!getByteBuffer().hasRemaining())
-                return isLast() ? EOF : EMPTY;
+            if (isTerminal())
+                return this;
+            if (!hasRemaining())
+                return EMPTY;
             retain();
             return from(getByteBuffer().slice(), isLast(), this);
         }
 
         /**
          * <p>Returns a new {@code Chunk} whose {@code ByteBuffer} is a slice, with the given
-         * position and limit, of the {@code ByteBuffer} of the source {@code Chunk}.</p>
+         * position and limit, of the {@code ByteBuffer} of the source {@code Chunk} unless the
+         * source is {@link #isTerminal() terminal} in which case {@code this} is returned, or
+         * if {@code position == limit} in which case {@link #EOF} or {@link #EMPTY} is
+         * returned depending on the value of {@code last}.</p>
          * <p>The returned {@code Chunk} retains the source {@code Chunk} and it is linked
          * to it via {@link #from(ByteBuffer, boolean, Retainable)}.</p>
          *
