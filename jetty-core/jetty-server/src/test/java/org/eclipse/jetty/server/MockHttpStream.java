@@ -33,7 +33,7 @@ import org.eclipse.jetty.util.NanoTime;
 public class MockHttpStream implements HttpStream
 {
     private static final Throwable SUCCEEDED = new Throwable();
-    private static final Content.Chunk DEMAND = Content.Chunk.from(BufferUtil.EMPTY_BUFFER, false);
+    private static final Content.Chunk DEMAND = Content.Chunk.EMPTY;
     private final long _nanoTime = NanoTime.now();
     private final AtomicReference<Content.Chunk> _content = new AtomicReference<>();
     private final AtomicReference<Throwable> _complete = new AtomicReference<>();
