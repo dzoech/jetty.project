@@ -437,14 +437,16 @@ public class Content
         /**
          * <p>Creates a Chunk with the given ByteBuffer.</p>
          * <p>The returned Chunk must be {@link #release() released}.</p>
-         * <p>New chunks with an empty {@code byteBuffer} and {@code last}
-         * set to {@code true} cannot be created.</p>
+         * <p>New chunks with an empty {@code byteBuffer} cannot be created.</p>
          *
          * @param byteBuffer the ByteBuffer with the bytes of this Chunk
          * @param last whether the Chunk is the last one
+         * @throws IllegalArgumentException if {@code byteBuffer} has no remaining bytes
+         * @see #EOF
+         * @see #EMPTY
          * @return a new Chunk
          */
-        static Chunk from(ByteBuffer byteBuffer, boolean last)
+        static Chunk from(ByteBuffer byteBuffer, boolean last) throws IllegalArgumentException
         {
             if (!byteBuffer.hasRemaining())
                 throw new IllegalArgumentException("Empty ByteBuffer instances are forbidden, use the EOF or EMPTY constant instead.");
@@ -472,8 +474,6 @@ public class Content
         /**
          * <p>Creates a last/non-last Chunk with the given ByteBuffer.</p>
          * <p>The returned Chunk must be {@link #release() released}.</p>
-         * <p>New chunks with an empty {@code byteBuffer} and {@code last}
-         * set to {@code true} cannot be created.</p>
          *
          * @param byteBuffer the ByteBuffer with the bytes of this Chunk
          * @param last whether the Chunk is the last one
@@ -494,8 +494,6 @@ public class Content
          * <p>Creates a last/non-last Chunk with the given ByteBuffer, linked to the given Retainable.</p>
          * <p>The {@link #retain()} and {@link #release()} methods of this Chunk will delegate to the
          * given Retainable.</p>
-         * <p>New chunks with an empty {@code byteBuffer} and {@code last}
-         * set to {@code true} cannot be created.</p>
          *
          * @param byteBuffer the ByteBuffer with the bytes of this Chunk
          * @param last whether the Chunk is the last one
