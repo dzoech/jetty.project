@@ -241,19 +241,11 @@ public class HttpStreamOverHTTP2 implements HttpStream, HTTP2Channel.Server
     private Content.Chunk createChunk(Stream.Data data)
     {
         DataFrame frame = data.frame();
-        ByteBuffer byteBuffer = frame.getData();
-        if (!byteBuffer.hasRemaining())
-        {
-            // We must NOT retain because we are not passing the
-            // ByteBuffer to the Chunk.
-            if (frame.isEndStream())
-                return Content.Chunk.EOF;
-            else
-                return Content.Chunk.EMPTY;
-        }
+        if (frame.isEndStream() && frame.remaining() == 0)
+            return Content.Chunk.EOF;
         // We need to retain because we are passing the ByteBuffer to the Chunk.
         data.retain();
-        return Content.Chunk.from(byteBuffer, frame.isEndStream(), data);
+        return Content.Chunk.from(frame.getData(), frame.isEndStream(), data);
     }
 
     @Override

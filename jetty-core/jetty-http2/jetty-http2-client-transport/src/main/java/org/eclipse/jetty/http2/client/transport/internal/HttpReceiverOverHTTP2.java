@@ -14,7 +14,6 @@
 package org.eclipse.jetty.http2.client.transport.internal;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -81,21 +80,10 @@ public class HttpReceiverOverHTTP2 extends HttpReceiver implements HTTP2Channel.
             return null;
         }
         DataFrame frame = data.frame();
-        ByteBuffer buffer = frame.getData();
-        if (!buffer.hasRemaining())
-        {
-            data.release();
-            if (frame.isEndStream())
-            {
-                responseSuccess(getHttpExchange(), null);
-                return Content.Chunk.EOF;
-            }
-            else
-            {
-                return Content.Chunk.EMPTY;
-            }
-        }
-        return Content.Chunk.from(buffer, false, data);
+        boolean last = frame.remaining() == 0 && frame.isEndStream();
+        if (last)
+            responseSuccess(getHttpExchange(), null);
+        return Content.Chunk.from(frame.getData(), last, data);
     }
 
     @Override

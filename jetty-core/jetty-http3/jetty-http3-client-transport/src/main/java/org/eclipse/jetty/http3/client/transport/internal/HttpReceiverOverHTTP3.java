@@ -64,20 +64,10 @@ public class HttpReceiverOverHTTP3 extends HttpReceiver implements Stream.Client
             return null;
         }
         ByteBuffer byteBuffer = data.getByteBuffer();
-        if (!byteBuffer.hasRemaining())
-        {
-            data.release();
-            if (data.isLast())
-            {
-                responseSuccess(getHttpExchange(), null);
-                return Content.Chunk.EOF;
-            }
-            else
-            {
-                return Content.Chunk.EMPTY;
-            }
-        }
-        return Content.Chunk.from(byteBuffer, false, data);
+        boolean last = !byteBuffer.hasRemaining() && data.isLast();
+        if (last)
+            responseSuccess(getHttpExchange(), null);
+        return Content.Chunk.from(byteBuffer, last, data);
     }
 
     @Override

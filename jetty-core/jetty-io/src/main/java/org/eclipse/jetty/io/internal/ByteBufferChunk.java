@@ -24,7 +24,7 @@ import org.eclipse.jetty.util.BufferUtil;
 
 public abstract class ByteBufferChunk implements Content.Chunk
 {
-    public static final ByteBufferChunk EMPTY = new ByteBufferChunk(true, BufferUtil.EMPTY_BUFFER, false)
+    public static final ByteBufferChunk EMPTY = new ByteBufferChunk(BufferUtil.EMPTY_BUFFER, false)
     {
         @Override
         public String toString()
@@ -32,7 +32,7 @@ public abstract class ByteBufferChunk implements Content.Chunk
             return "%s[EMPTY]".formatted(ByteBufferChunk.class.getSimpleName());
         }
     };
-    public static final ByteBufferChunk EOF = new ByteBufferChunk(true, BufferUtil.EMPTY_BUFFER, true)
+    public static final ByteBufferChunk EOF = new ByteBufferChunk(BufferUtil.EMPTY_BUFFER, true)
     {
         @Override
         public String toString()
@@ -46,13 +46,6 @@ public abstract class ByteBufferChunk implements Content.Chunk
 
     public ByteBufferChunk(ByteBuffer byteBuffer, boolean last)
     {
-        this(false, byteBuffer, last);
-    }
-
-    private ByteBufferChunk(boolean isConstant, ByteBuffer byteBuffer, boolean last)
-    {
-        if (!isConstant && !byteBuffer.hasRemaining() && last)
-            throw new IllegalArgumentException("Empty ByteBuffer instances with last=true are forbidden, use the EOF constant instead.");
         this.byteBuffer = Objects.requireNonNull(byteBuffer);
         this.last = last;
     }

@@ -233,19 +233,12 @@ public class HttpStreamOverHTTP3 implements HttpStream
 
     private Content.Chunk createChunk(Stream.Data data)
     {
-        ByteBuffer byteBuffer = data.getByteBuffer();
-        if (!byteBuffer.hasRemaining())
-        {
-            // As we are NOT passing the ByteBuffer to the Chunk,
-            // we must not retain.
-            if (data.isLast())
-                return Content.Chunk.EOF;
-            else
-                return Content.Chunk.EMPTY;
-        }
+        if (data == Stream.Data.EOF)
+            return Content.Chunk.EOF;
+
         // As we are passing the ByteBuffer to the Chunk we need to retain.
         data.retain();
-        return Content.Chunk.from(byteBuffer, data.isLast(), data);
+        return Content.Chunk.from(data.getByteBuffer(), data.isLast(), data);
     }
 
     @Override

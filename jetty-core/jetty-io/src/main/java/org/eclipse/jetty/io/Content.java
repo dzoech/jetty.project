@@ -446,6 +446,8 @@ public class Content
          */
         static Chunk from(ByteBuffer byteBuffer, boolean last)
         {
+            if (!byteBuffer.hasRemaining())
+                throw new IllegalArgumentException("Empty ByteBuffer instances are forbidden, use the EOF or EMPTY constant instead.");
             return new ByteBufferChunk.WithReferenceCount(byteBuffer, last);
         }
 
@@ -459,6 +461,11 @@ public class Content
          */
         static Chunk from(ByteBuffer byteBuffer, boolean last, Runnable releaser)
         {
+            if (!byteBuffer.hasRemaining())
+            {
+                releaser.run();
+                return last ? EOF : EMPTY;
+            }
             return new ByteBufferChunk.ReleasedByRunnable(byteBuffer, last, Objects.requireNonNull(releaser));
         }
 
@@ -475,6 +482,11 @@ public class Content
          */
         static Chunk from(ByteBuffer byteBuffer, boolean last, Consumer<ByteBuffer> releaser)
         {
+            if (!byteBuffer.hasRemaining())
+            {
+                releaser.accept(byteBuffer);
+                return last ? EOF : EMPTY;
+            }
             return new ByteBufferChunk.ReleasedByConsumer(byteBuffer, last, Objects.requireNonNull(releaser));
         }
 
@@ -492,6 +504,11 @@ public class Content
          */
         static Chunk from(ByteBuffer byteBuffer, boolean last, Retainable retainable)
         {
+            if (!byteBuffer.hasRemaining())
+            {
+                retainable.release();
+                return last ? EOF : EMPTY;
+            }
             return new ByteBufferChunk.WithRetainable(byteBuffer, last, Objects.requireNonNull(retainable));
         }
 
